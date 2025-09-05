@@ -1,0 +1,5 @@
+library(magrittr)
+library(dygraphs)
+library(MASS)
+data(accdeaths)
+dygraph(accdeaths) %>% dyOptions(fillGraph = TRUE, drawGrid = TRUE)
