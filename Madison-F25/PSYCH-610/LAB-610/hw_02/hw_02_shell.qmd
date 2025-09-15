@@ -97,7 +97,7 @@ The researchers hope to use these data to answer the following question: do part
 ### a. 
 Read in `hw2_data.csv`, from the course webpage. Name the dataframe `d`.
 ```{r}
-d <- read_csv("hw_02_data.csv")
+d <- read_csv("~/downloads/hw_02_data.csv")
 
 # Rename pretest to science_aptitude for consistency with assignment
 d <- d |>
