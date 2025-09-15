@@ -1,0 +1,365 @@
+---
+title: "hw2" 
+author: "" 
+date: "`r lubridate::today()`"
+format: 
+  html:
+    toc: true 
+    toc_depth: 4
+    embed-resources: true
+editor_options: 
+  chunk_output_type: console
+---
+
+# Set up
+
+To keep in line with best practices, we ask you do the following things in a code chunk at the beginning of each quarto document. 
+
+1. **Set conflict policy**   
+
+    - This is important so that we know if we load two packages with conflicting functions (i.e., they have the same name). Using `options(conflicts.policy = "depends.ok")` at the top of your setup code chunk (i.e., before you load any packages) will produce an error if two conflicting packages are loaded. There are ways to set custom conflict policies and work around conflicts (e.g., only loading certain functions from a package). You can find more documentation [here](https://jjcurtin.github.io/book_dwvt/conflicts.html).  
+
+2. **Load packages**    
+
+    - You should load the **minimum** number of packages needed to execute your code. Often times this may just be `tidyverse`. Loading as few as possible packages also helps reduce the likelihood of conflicts.    
+
+    - To load packages use the `library()` function. If you have never installed the package you will need to do that using `install.packages()` before the first time you use the package.  
+    
+    - In this assignment, load tidyverse and skimr
+  
+```{r}
+  library(tidyverse)
+  library(skimr)
+```
+
+3. **Set path**   
+
+    - This should be a relative path from your R project pointing to your homework folder.   
+    data
+
+4. A few other things to notice in the example setup code chunk below:   
+
+- You can customize code chunk settings. For example, in the chunk below we are using `#| message: false` to indicate that we do not want to print out messages associated with loading a library. **These settings will only take effect for when you render the document.**  
+
+- We are using the `here()` function in the `here` package (`here::here()`) to define the path when reading in our data. This approach (vs. `file.path()`) works well for relative paths when using R Projects.   
+
+- We are setting a `ggplot2` theme using `theme_set(theme_classic())`. This applies a specific theme to all plots in the quarto document. There are several themes you can choose. We like `theme_classic()` because it is pretty and close to APA format.  
+
+```{r}
+# suppress messages
+#| message: false
+
+options(conflicts.policy = "depends.ok")
+
+# Load required packages
+library(tidyverse)
+library(skimr)
+library(here)
+library(lubridate)
+library(janitor)
+library(ggplot2)
+
+# Set ggplot2 theme
+theme_set(theme_classic())
+```
+
+
+
+# Part I. Working with Data in R
+For this first assignment, we’re using fake data to practice your new skills.
+
+This hypothetical study is based on work in science and math learning (e.g., Schwartz, D. L., Chase, C. C., Oppezzo, M. A., & Chin, D. B. (2011). Practicing versus inventing with contrasting cases: The effects of telling first on learning and transfer. *Journal of Educational Psychology, 103(4)*, 759–775.).
+
+In this hypothetical study, suppose participants have been randomly assigned to one of two conditions, Explore or Teach, to learn about a new physics concept.
+
+All participants enrolled in the study completed a pretest, to assess their prior knowledge of the physics concept. Then, participants in the Explore condition attempted to solve related problems on their own to learn about the concept, while participants in the Teach condition received a lesson about the concept directly from an instructor instead.
+
+At the end of the study, participants’ learning was assessed using three posttest measures assessing conceptual understanding (knowledge about the physics concept), procedural competence (ability to work with the concept in laboratory), and perceptual problem encoding (meaningful mental representations of the concept). Thus, the data file includes the following 6 variables:
+
+
+* `sub_id` (Subject ID number) 
+
+* `science_aptitude` (pretest score on knowledge of the physics concept)
+
+* `condition` (teach; explore)
+
+* `physics_con` (conceptual understanding score)
+
+* `physics_proc` (procedural competence score)
+
+* `physics_perc` (perceptual problem encoding score)
+
+The researchers hope to use these data to answer the following question: do participants’ pretest score and condition (Explore vs. Teach) predict posttest score?
+
+
+## 1. Read the data in and check them out.
+
+### a. 
+Read in `hw2_data.csv`, from the course webpage. Name the dataframe `d`.
+```{r}
+d <- read_csv("hw_02_data.csv")
+
+# Rename pretest to science_aptitude for consistency with assignment
+d <- d |>
+  rename(science_aptitude = pretest)
+```
+
+### b. 
+Use one of the functions we learned in class to view some of the data (note that `view()` should not be used in a qmd document that you intend to render.  That is only for interactive use in the console) 
+```{r}
+head(d)
+glimpse(d)
+skim(d)
+```
+
+Use the `skim()` function to get descriptive statistics on the data file.
+
+```{r}
+skim(d)
+```
+
+
+Practice skimming a subset of the dataframe (from condition to physics_proc)
+
+```{r}
+d |> select(condition, physics_con, physics_perc, physics_proc) |> skim()
+```
+
+
+Next, show how you can get the same information using the summarise() function.
+
+```{r}
+d |>
+  filter(!is.na(physics_con) & !is.na(physics_perc) & !is.na(physics_proc)) |>
+  select(condition, physics_con, physics_perc, physics_proc) |> 
+  summarise(
+    mean_physics_con = mean(physics_con, na.rm = TRUE),
+    mean_physics_perc = mean(physics_perc, na.rm = TRUE),
+    mean_physics_proc = mean(physics_proc, na.rm = TRUE),
+    sd_physics_con = sd(physics_con, na.rm = TRUE),
+    sd_physics_perc = sd(physics_perc, na.rm = TRUE),
+    sd_physics_proc = sd(physics_proc, na.rm = TRUE)
+  )
+```
+
+
+
+
+### c.
+Write out a list of all of the DV(s) and all of the IV(s)/predictor variables present in this dataset. When you are done, you should have 2 lists of variables.
+
+IVs:     
+DVs: 
+
+
+## 2. Obtain the following basic information about your data:
+
+Now try create your own code chunks.
+
+### a.
+
+You can also skim your dataframe without generating the histogram for numeric variables. Google which function in `skimr` package allows you to do that.
+
+`skim_without_charts()`
+
+Generate descriptive stats (mean, median, standard deviation, etc.) without any charts for all variables in the `d` dataframe.
+
+```{r}
+skim_without_charts(d)
+```
+
+
+### b.
+Get descriptive statistics for just the pretest knowledge variable (`science_aptitude`).
+
+```{r}
+skim_without_charts(d$science_aptitude)
+
+# Alternative using summary statistics
+d |>
+  summarise(
+    mean_science_aptitude = mean(science_aptitude, na.rm = TRUE),
+    sd_science_aptitude = sd(science_aptitude, na.rm = TRUE),
+    min_science_aptitude = min(science_aptitude, na.rm = TRUE),
+    max_science_aptitude = max(science_aptitude, na.rm = TRUE),
+    median_science_aptitude = median(science_aptitude, na.rm = TRUE)
+  )
+```
+
+
+### c.
+Generate a histogram for the pretest variable
+
+```{r}
+ggplot(d, aes(x = science_aptitude)) +
+  geom_histogram()
+```
+
+
+## 3. Centering pretest:
+
+### a.
+Create a new variable that is the mean-centered score for pretest knowledge. Give this variable a good name (following the class conventions covered in lab).
+
+```{r}
+d <- d |>
+  mutate(science_aptitude_centered = science_aptitude - mean(science_aptitude, na.rm = TRUE))
+```
+
+
+### b.
+Check that your new variable is indeed mean-centered using code.
+
+```{r}
+mean(d$science_aptitude_centered, na.rm = TRUE)
+```
+
+
+## 4. Center condition 
+Recode `condition` into a new numeric variable where teach = -0.5 and explore = 0.5 
+
+```{r}
+d <- d |>
+  mutate(condition_numeric = if_else(condition == "teach", -0.5, 0.5))
+```
+
+
+## 5. Create a single global measure of overall learning by averaging the posttest measures:
+
+### a.
+
+Create a variable that is the average of the three posttest variables (ignore missing data). Name this variable `posttest_m` 
+
+```{r}
+d <- d |>
+  mutate(posttest_m = (physics_con + physics_perc + physics_proc) / 3)
+```
+
+Now see if you can achieve the same thing with `rowwise()` and `mutate()`
+
+```{r}
+d <- d |>
+  rowwise() |>
+  mutate(posttest_m_rowwise = mean(c(physics_con, physics_perc, physics_proc), na.rm = TRUE)) |>
+  ungroup()
+```
+
+
+### b.
+The mean of `posttest_m` is `r mean(d$posttest_m, na.rm = TRUE)` and the standard deviation is `r sd(d$posttest_m, na.rm = TRUE)`.
+
+
+### c.
+Generate descriptive statistics of `posttest_m` for each of the experimental conditions.
+
+```{r}
+d |>
+  group_by(condition) |>
+  summarise(mean_posttest_m = mean(posttest_m, na.rm = TRUE), sd_posttest_m = sd(posttest_m, na.rm = TRUE))
+```
+
+
+## 6. Standardizing physics_con score:
+
+### a.
+Create a standardized variable for the conceptual understanding measure, with an appropriate name (following class conventions).
+
+```{r}
+d <- d |>
+  mutate(physics_con_standardized = (physics_con - mean(physics_con, na.rm = TRUE)) / sd(physics_con, na.rm = TRUE))
+```
+
+
+### b.
+Using one line of code, check your work to make sure this is the standardized score.
+
+```{r}
+mean(d$physics_con_standardized, na.rm = TRUE)
+sd(d$physics_con_standardized, na.rm = TRUE)
+```
+
+
+### c.
+You have now created several new variables. Write out a command that shows the names of all the variables (also known as “columns”) in the d data frame (it’s okay if the command shows you more information than just the column names, but finding a command that will give you only this information is a good opportunity to practice Googling!)
+
+```{r}
+# Option 1: Just the column names
+names(d)
+
+# Option 2: More detailed info about the data frame (including column names)
+str(d)
+
+# Option 3: Another way to get only the column names
+colnames(d)
+```
+
+
+
+## 7. Make a scatter plot with raw pretest score (`science_aptitude`) on the x-axis, mean posttest score on the y-axis.
+
+```{r}
+ggplot(d, aes(x = science_aptitude, y = posttest_m)) +
+  geom_point() +
+  labs(x = "Science Aptitude (Pretest Score)", y = "Mean Posttest Score", 
+       title = "Scatter Plot: Science Aptitude vs Mean Posttest Score")
+```
+
+
+
+These data look strange because there seems to be no relationship between participants' pretest score and mean posttest score (however we cannot say for sure just by eyeballing; we need to statistically test it). The mean posttest score is also divided into two extreme clusters with few individuals scoring in the 70-75 range. This is unusual, and may indicate that the data are fake!
+
+## 8. Use the command we learned in lab to generate the mean posttest score for each condition.
+
+```{r}
+d |>
+  group_by(condition) |>
+  summarise(
+    mean_posttest_m = mean(posttest_m, na.rm = TRUE),
+    sd_posttest_m = sd(posttest_m, na.rm = TRUE),
+    n = sum(!is.na(posttest_m))
+  )
+```
+
+It seems that those in Explore condition scored higher on the mean posttest score than those in Teach condition, suggesting active exploration promotes learning compared to passive teaching.
+
+# Part II: Reading Questions (Chapters 1 and 2)
+Answer the following questions in a few sentences directly in your qmd file (not within a code chunk).
+
+## 10. When fitting a model to data, the data analyst faces two conflicting goals. What are those two goals and why are they conflicting?
+
+The two conflicting goals are **goodness of fit** and **parsimony**. 
+
+Goodness of fit refers to how well the model explains the observed data - we want the model to capture as much of the variance in the data as possible. 
+
+Parsimony refers to simplicity - we want the model to be as simple as possible with as few parameters as necessary. These goals conflict because adding more parameters to a model typically improves goodness of fit (it can explain more variance), but reduces parsimony (makes the model more complex). The challenge is finding the right balance between these competing objectives.
+
+
+## 11. What are two consequences of using sum of squared errors rather than the sum of errors as a summary measure of model error?
+
+Using the sum of squared errors (SSE) instead of the sum of errors has two key consequences: 
+
+(1) **Large errors are penalized more strongly** — squaring each error means that bigger errors contribute disproportionately more to the total, making the measure especially sensitive to outliers. 
+
+(2) **The total cannot cancel out to zero** — since squaring makes all values positive, positive and negative errors cannot offset each other, so SSE always yields a non-negative value. This makes SSE a reliable and interpretable measure of overall model error.
+
+
+# Part III: Reflection
+Take a minute to reflect on the materials covered in this homework. 
+
+## 12. Which parts did you understand pretty well?
+
+
+## 13. Which parts appear to you the most unclear or difficult?
+
+
+
+## 14. How long did it take you to complete this assignment? Write the number of hours.
+
+
+## 15. Render your quarto doc using the render button near the top of your RStudio window. 
+
+If rendering is successful, RStudio will also output a single HTML file of your homework. Please submit your .qmd file, your .html file in Canvas.
+
+If you have trouble rendering your file, please contact Coco, Jamie, or Shanti.
+
+**Congrats on finishing your second application assignment!**
